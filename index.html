@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeKUT Resource Navigator</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172b45;
+    }
+
+    header {
+      background: #173b63;
+      color: white;
+      padding: 24px 18px;
+      text-align: center;
+    }
+
+    header h1 { margin: 0 0 8px; }
+    header p { margin: 0; color: #d8e8f7; }
+
+    main {
+      max-width: 1000px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px #0000000c;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+      margin: 7px 0 14px;
+    }
+
+    button {
+      background: #1769aa;
+      color: white;
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:hover { background: #104d80; }
+
+    .map {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+      border: 3px solid #64748b;
+      border-radius: 8px;
+      background: #e2e8f0;
+    }
+
+    .room {
+      min-height: 100px;
+      background: white;
+      border: 2px solid #94a3b8;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: left;
+      color: #172b45;
+      margin: 0;
+    }
+
+    .room strong, .room span { display: block; }
+    .room span { font-size: 13px; margin-top: 8px; }
+
+    .room.selected {
+      background: #dbeafe;
+      border: 3px solid #1769aa;
+    }
+
+    #message { line-height: 1.6; }
+
+    footer {
+      text-align: center;
+      padding: 22px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 450px) {
+      .map { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>DeKUT Resource Navigator</h1>
+    <p>Find rooms inside the Resource Center</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Find a room</h2>
+
+      <label for="search">Room name or number</label>
+      <input id="search"
+        placeholder="e.g. Reading Room or G01">
+
+      <label for="floor">Choose a floor</label>
+      <select id="floor">
+        <option>Ground Floor</option>
+        <option>First Floor</option>
+        <option>Second Floor</option>
+      </select>
+
+      <p id="message" aria-live="polite">
+        Choose a floor or search for a room.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2 id="mapTitle">Ground Floor Map</h2>
+      <p>
+        Select a room to view its details.
+        This is a sample layout, not the actual building plan.
+      </p>
+      <div id="map" class="map"></div>
+    </section>
+  </main>
+
+  <footer>
+    DeKUT Resource Navigator · Student project
+  </footer>
+
+  <script>
+    // EXAMPLE DATA ONLY.
+    // Replace these entries with verified room information.
+    const rooms = [
+      {
+        number: "G01",
+        name: "Computer Laboratory",
+        floor: "Ground Floor",
+        description: "Sample laboratory location"
+      },
+      {
+        number: "G02",
+        name: "Administration Office",
+        floor: "Ground Floor",
+        description: "Sample office location"
+      },
+      {
+        number: "F101",
+        name: "Reading Room",
+        floor: "First Floor",
+        description: "Sample reading room location"
+      },
+      {
+        number: "F102",
+        name: "Meeting Room",
+        floor: "First Floor",
+        description: "Sample meeting room location"
+      },
+      {
+        number: "S201",
+        name: "Research Office",
+        floor: "Second Floor",
+        description: "Sample office location"
+      }
+    ];
+
+    const search = document.getElementById("search");
+    const floor = document.getElementById("floor");
+    const map = document.getElementById("map");
+    const message = document.getElementById("message");
+    const mapTitle = document.getElementById("mapTitle");
+
+    let selectedRoom = null;
+
+    function renderMap() {
+      const query = search.value.trim().toLowerCase();
+
+      const matches = rooms.filter(room =>
+        room.floor === floor.value &&
+        (room.name + " " + room.number)
+          .toLowerCase().includes(query)
+      );
+
+      mapTitle.textContent = floor.value + " Map";
+      map.replaceChildren();
+
+      if (matches.length === 0) {
+        message.textContent =
+          "No matching rooms on this floor.";
+        return;
+      }
+
+      matches.forEach(room => {
+        const button = document.createElement("button");
+        button.className = "room";
+
+        if (selectedRoom === room.number) {
+          button.classList.add("selected");
+        }
+
+        const number = document.createElement("strong");
+        number.textContent = room.number;
+
+        const name = document.createElement("span");
+        name.textContent = room.name;
+
+        button.append(number, name);
+
+        button.addEventListener("click", () => {
+          selectedRoom = room.number;
+          renderMap();
+
+          message.textContent =
+            room.name + " (" + room.number + "). " +
+            room.description +
+            ". Exact indoor directions will be added " +
+            "after the real floor plan is mapped.";
+        });
+
+        map.appendChild(button);
+      });
+
+      if (!matches.some(r => r.number === selectedRoom)) {
+        message.textContent =
+          matches.length + " matching room(s) found.";
+      }
+    }
+
+    search.addEventListener("input", renderMap);
+    floor.addEventListener("change", renderMap);
+
+    renderMap();
+  </script>
+</body>
+</html>
