@@ -242,14 +242,4 @@ renderMap();
 
       if (!matches.some(r => r.number === selectedRoom)) {
         message.textContent =
-          matches.length + " matching room(s) found.";
-      }
-    }
-
-    search.addEventListener("input", renderMap);
-    floor.addEventListener("change", renderMap);
-
-    renderMap();
-  </script>
-</body>
-</html>
+          matches.length + " matching room(s) found.
